@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# 下载远程配置文件
+CONFIG_URL="https://raw.githubusercontent.com/NorthSeacoder/install/main/list.txt"
+CONFIG_FILE="/tmp/list.txt"
+curl -fsSL "$CONFIG_URL" -o "$CONFIG_FILE"
+
 # 安装Xcode Command Line Tools
 # xcode-select --install
 
@@ -10,6 +15,9 @@ if ! command -v brew &> /dev/null; then
 else
     echo "Homebrew 已安装."
 fi
+
+# 初始化已安装软件列表数组
+installed_software=()
 
 # 安装软件函数
 install_software() {
@@ -59,9 +67,22 @@ while IFS='=' read -r key value; do
     elif [[ $key == "config_file" ]]; then
         software_config_file=$value
         install_software "$software_name" "$software_cask" "$software_config" "$software_config_file"
+
+         # 将软件名称添加到已安装软件列表数组
+        installed_software+=("$software_name")
+
         # 重置变量以读取下一段配置
         unset software_name software_cask software_config software_config_file
     fi
-done < list.txt
+done < "$CONFIG_FILE"
+
+# 打印已安装软件列表
+echo "所有安装完成的软件："
+for software in "${installed_software[@]}"; do
+    echo "- $software"
+done
+
+# 删除配置文件
+rm -f "$CONFIG_FILE"
 
 echo "开发环境配置完成！"
