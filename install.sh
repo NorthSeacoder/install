@@ -1,53 +1,39 @@
 #!/bin/bash
 
-# 设置脚本以在使用未定义变量时退出，增强脚本的健壮性。
-set -u
+# 安装Xcode Command Line Tools
+# xcode-select --install
 
 # 安装 Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-# 使用 Homebrew 安装常用软件
-brew_install() {
-    echo "正在安装 $1..."
-    brew install $1
-    echo "$1 安装完成！"
-}
+# 解析配置并安装软件
+while IFS='=' read -r key value; do
+    if [[ $key == "name" ]]; then
+        software_name=$value
+    elif [[ $key == "cask" ]]; then
+        software_cask=$value
+    elif [[ $key == "config" ]]; then
+        software_config=$value
+    elif [[ $key == "config_file" ]]; then
+        software_config_file=$value
+        # 安装软件
+        if [[ "$software_cask" == "true" ]]; then
+            echo "正在安装 $software_name (cask)..."
+            brew install --cask "$software_name"
+        else
+            echo "正在安装 $software_name..."
+            brew install "$software_name"
+        fi
+        echo "$software_name 安装完成！"
 
-# 安装 Zsh 和 Oh My Zsh
-brew_install zsh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-
-
-# 安装 Git
-brew_install git
-
-# 安装 nvm (Node Version Manager)
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-
-# 初始化 NVM 和加载 NVM 脚本到当前会话
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-# 安装 Node.js (最新LTS版本)
-nvm install --lts
-nvm use --lts
-
-# 安装 nrm (Node Registry Manager)
-npm install -g nrm
-
-# 使用 nrm 切换至淘宝源，加快npm包的安装速度（可选）
-nrm use taobao
-
-# 安装 Visual Studio Code
-brew install --cask visual-studio-code
-
-# 安装其他软件（示例）
-# brew install --cask google-chrome
-# brew install --cask iterm2
-
-# 扩展：安装其他任何需要的软件
-# brew_install <软件名>
-# brew install --cask <软件名>
+        # 应用配置
+        if [[ ! -z "$software_config" && ! -z "$software_config_file" ]]; then
+            echo "应用配置：$software_config 到 $HOME/$software_config_file"
+            echo "$software_config" >> "$HOME/$software_config_file"
+        fi
+        # 重置变量以读取下一段配置
+        unset software_name software_cask software_config software_config_file
+    fi
+done < config.txt
 
 echo "开发环境配置完成！"

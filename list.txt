@@ -1,0 +1,9 @@
+name=visual-studio-code
+cask=true
+config=alias code='/usr/local/bin/code'
+config_file=.zshrc
+
+name=git
+cask=false
+config=export GIT_EDITOR=vim
+config_file=.zshrc
